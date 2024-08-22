@@ -4,12 +4,13 @@ import { getAuth, initializeAuth, indexedDBLocalPersistence } from 'firebase/aut
 import { Capacitor } from '@capacitor/core'
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyDfH3zGn8105ao6uXAy-hQzcXSDmg4ooVc',
-  authDomain: 'moneyballs---firestore-6d986.firebaseapp.com',
-  projectId: 'moneyballs---firestore-6d986',
-  storageBucket: 'moneyballs---firestore-6d986.appspot.com',
-  messagingSenderId: '480300453984',
-  appId: '1:480300453984:web:b7553ca734fafe704b7305'
+  apiKey: "AIzaSyC9Yc9WXyZKiF_exf5DUOjfQOkTQ9pXEkM",
+  authDomain: "fieldservice-app-10521.firebaseapp.com",
+  projectId: "fieldservice-app-10521",
+  storageBucket: "fieldservice-app-10521.appspot.com",
+  messagingSenderId: "244614483521",
+  appId: "1:244614483521:web:358a6d85093a6308d980c0",
+  measurementId: "G-4047PCH4QH",
 }
 
 function whichAuth() {
