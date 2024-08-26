@@ -1,57 +1,65 @@
 <template>
-  <q-page class="flex flex-center">
-    <q-card
-      class="auth bg-primary text-white q-pa-lg"
-    >
-      <q-card-section>
-        <ToolbarTitle />
-      </q-card-section>
+  <q-page class="row wrap items-center ">
+      <div class="col-6 column items-center">
+        <q-icon name="engineering" size="20em" color="primary"/>
+      </div>
 
-      <q-card-section>
-        <q-tabs
-          v-model="tab"
-          no-caps
-        >
-          <q-tab name="login" label="Login" />
-          <q-tab name="register" label="Register" />
-        </q-tabs>
-      </q-card-section>
+      <div class="col-6 column q-pa-md">
+        <h2 >Login</h2>
+        <q-form @submit="storeAuth.loginUser(credentials)"class="column q-gutter-y-md" >
 
-      <q-card-section>
-        <q-form
-          @submit="formSubmit"
-        >
-          <q-input
-            v-model="credentials.email"
-            class="q-mb-md"
-            :bg-color="useLightOrDark('white', 'black')"
-            label="Email"
-            type="email"
-            autocomplete="email"
-            filled
-          />
-          <q-input
-            v-model="credentials.password"
-            class="q-mb-md"
-            :bg-color="useLightOrDark('white', 'black')"
-            label="Password"
-            type="password"
-            autocomplete="current-password"
-            filled
-          />
-          <q-btn
-            class="full-width"
-            color="white"
-            type="submit"
-            :label="submitButtonTitle"
-            outline
-            no-caps
-          />
+          <q-input v-model="credentials.email" filled type="email" hint="Email"
+            lazy-rules :rules="[ val => val && val.length > 0 || 'Please enter email adres']"/>
+
+          <q-input v-model="credentials.password" filled :type="isPwd ? 'password' : 'text'" hint="Password"
+            lazy-rules :rules="[ val => val && val.length > 0 || 'Please enter your password']">
+            <template v-slot:append>
+              <q-icon
+                :name="isPwd ? 'visibility_off' : 'visibility'"
+                class="cursor-pointer"
+                @click="isPwd = !isPwd"
+              />
+            </template>
+          </q-input>
+
+          <q-toggle v-model="rememberMe" label="remember me?" />
+          <q-btn label="Login" type="submit"/>
         </q-form>
-      </q-card-section>
+        <div class="q-my-sm">
+          <p>Don't have an account? <a @click="createAccount = !createAccount" class="text-primary">Create one</a></p>
+        </div>
+        <q-btn class="q-my-sm">Login with google</q-btn>
 
-    </q-card>
+      </div>
+
   </q-page>
+
+  <q-dialog v-model="createAccount" persistent>
+      <q-card style="min-width: 350px" class="q-pa-md">
+        <q-form @submit="storeAuth.registerUser(credentialsCreateAccount)" class="column q-gutter-y-md" >
+          <q-card-section class="row items-center q-pb-none">
+            <div class="text-h6">Create account</div>
+            <q-space />
+            <q-btn icon="close" flat round dense v-close-popup />
+         </q-card-section>
+          <q-input v-model="credentialsCreateAccount.email" filled type="email" hint="Email"
+            lazy-rules :rules="[ val => val && val.length > 0 || 'Please enter email adres']"/>
+
+          <q-input v-model="credentialsCreateAccount.password" filled :type="isPwd ? 'password' : 'text'" hint="Password"
+            lazy-rules :rules="[ val => val && val.length > 0 || 'Please enter your password']">
+            <template v-slot:append>
+              <q-icon
+                :name="isPwd ? 'visibility_off' : 'visibility'"
+                class="cursor-pointer"
+                @click="isPwd = !isPwd"
+              />
+            </template>
+          </q-input>
+
+        <q-btn label="Create" type="submit"/>
+        </q-form>
+      </q-card>
+    </q-dialog>
 </template>
 
 <script setup>
@@ -59,72 +67,33 @@
   /*
     imports
   */
-  
-    import { ref, computed, reactive } from 'vue'
+
+    import { ref, reactive } from 'vue'
     import { useQuasar } from 'quasar'
     import { useStoreAuth } from 'src/stores/storeAuth'
-    import { useLightOrDark } from 'src/use/useLightOrDark'
-    import ToolbarTitle from 'src/components/Layout/ToolbarTitle.vue'
-
 
   /*
     quasar
   */
-  
+
     const $q = useQuasar()
 
-
-  /*
-    stores
-  */
-  
-    const storeAuth = useStoreAuth()
-
-
-  /*
-    tabs
-  */
-  
-    const tab = ref('login')
-
-
-  /*
-    submit button title
-  */
-  
-    const submitButtonTitle = computed(() => {
-      return tab.value === 'login' ? 'Login' : 'Register'
-    })
-
-
-  /*
-    form
-  */
-  
+    let isPwd = ref(true)
+    let rememberMe = ref(false)
     const credentials = reactive({
       email: '',
       password: ''
     })
+    let createAccount = ref(false)
+    const credentialsCreateAccount = reactive({
+      email: '',
+      password: ''
+    })
+  /*
+    stores
+  */
 
-    const formSubmit = () => {
-      if (!credentials.email || !credentials.password) {
-        $q.dialog({
-          title: 'Error',
-          message: 'Please enter an email & password motherflipper!'
-        })
-      }
-      else {
-        formSubmitSuccess()
-      }
-    }
+    const storeAuth = useStoreAuth()
 
-    const formSubmitSuccess = () => {
-      if (tab.value === 'register') {
-        storeAuth.registerUser(credentials)
-      }
-      else {
-        storeAuth.loginUser(credentials)
-      }
-    }
 
 </script>

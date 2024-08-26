@@ -5,8 +5,14 @@ import { useStoreAuth } from 'src/stores/storeAuth'
 import { collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc, query, orderBy } from 'firebase/firestore'
 import { db } from 'src/firebase/firebase'
 
-let entriesCollectionRef = null,
-    entriesQueryRef = null,
+let customersCollectionRef = null,
+    customersQueryRef = null,
+    projectsCollectionRef = null,
+    projectsQueryRef = null,
+    visitsCollectionRef = null,
+    visitsQueryRef = null,
+    reportsCollectionRef = null,
+    reportsQueryRef = null,
     getEntriesSnapshot = null
 
 export const useStoreEntries = defineStore('entries', () => {
@@ -14,98 +20,43 @@ export const useStoreEntries = defineStore('entries', () => {
   /*
     state
   */
-  
-    const entries = ref([
-      // {
-      //   id: 'id1',
-      //   name: 'Salary',
-      //   amount: 4999.99,
-      //   paid: true,
-      //   order: 1
-      // },
-      // {
-      //   id: 'id2',
-      //   name: 'Rent',
-      //   amount: -999,
-      //   paid: false,
-      //   order: 2
-      // },
-      // {
-      //   id: 'id3',
-      //   name: 'Phone bill',
-      //   amount: -14.99,
-      //   paid: false,
-      //   order: 3
-      // },
-      // {
-      //   id: 'id4',
-      //   name: 'Unknown',
-      //   amount: 0,
-      //   paid: false,
-      //   order: 4
-      // },
+    const customers = ref([
     ])
+    const projects = ref([
 
+    ])
+    const visits = ref([
+    ])
+    const reports = ref([
+    ])
     const entriesLoaded = ref(false)
-
-    const options = reactive({
-      sort: false
-    })
-
 
   /*
     getters
   */
-  
-    const balance = computed(() => {
-      return entries.value.reduce((accumulator, { amount }) => {
-        return accumulator + amount
-      }, 0)
-    })
-
-    const balancePaid = computed(() => {
-      return entries.value.reduce((accumulator, { amount, paid }) => {
-        return paid ? accumulator + amount : accumulator
-      }, 0)
-    })
-
-    const runningBalances = computed(() => {
-      let runningBalances = [],
-          currentRunningBalance = 0
-
-      if (entries.value.length) {
-        entries.value.forEach(entry => {
-          let entryAmount = entry.amount ? entry.amount : 0
-          currentRunningBalance = currentRunningBalance + entryAmount
-          runningBalances.push(currentRunningBalance)
-        })
-      }
-
-      return runningBalances
-    })
 
 
   /*
     actions
   */
-  
+
     const init = () => {
-      const storeAuth = useStoreAuth()
-      entriesCollectionRef = collection(db, 'users', storeAuth.userDetails.id, 'entries')
-      entriesQueryRef = query(entriesCollectionRef, orderBy('order'))
       loadEntries()
     }
-
     const loadEntries = async (showLoader = true) => {
-      if (showLoader) entriesLoaded.value = false
-      getEntriesSnapshot = onSnapshot(entriesQueryRef, (querySnapshot) => {
-        let entriesFB = []
+      const storeAuth = useStoreAuth()
+      const customer_id = 'Q9Aec3TAEzP5OlQ7vPUT'
+      customersCollectionRef = collection(db, 'users', storeAuth.userDetails.id, 'customers')
+      customersQueryRef = query(customersCollectionRef, orderBy('name'))
+       if (showLoader) entriesLoaded.value = false
+      getEntriesSnapshot = onSnapshot(customersQueryRef, (querySnapshot) => {
+        let customersFB = []
         querySnapshot.forEach((doc) => {
           let entry = doc.data()
           entry.id = doc.id
-          entriesFB.push(entry)
+          customersFB.push(entry)
         })
-        entries.value = entriesFB
+        customers.value = customersFB
         entriesLoaded.value = true
       }, error => {
         Dialog.create({
@@ -114,108 +65,134 @@ export const useStoreEntries = defineStore('entries', () => {
         })
       })
     }
-
+    const loadProjects = async (customerId) => {
+      projectsCollectionRef = collection(doc(customersCollectionRef, customerId), 'projects');
+      projectsQueryRef = query(projectsCollectionRef, orderBy('name'))
+        getEntriesSnapshot = onSnapshot(projectsQueryRef, (querySnapshot) => {
+        let projectsFB = []
+        querySnapshot.forEach((doc) => {
+          let entry = doc.data()
+          entry.id = doc.id
+          projectsFB.push(entry)
+        })
+        projects.value = projectsFB
+        entriesLoaded.value = true
+      }, error => {
+        Dialog.create({
+          title: 'Error',
+          message: error.message
+        })
+      })
+    }
+    const loadVisits = async (projectId) => {
+      visitsCollectionRef = collection(doc(projectsCollectionRef, projectId), 'visits');
+      visitsQueryRef = query(visitsCollectionRef, orderBy('name'))
+        getEntriesSnapshot = onSnapshot(visitsQueryRef, (querySnapshot) => {
+        let visitsFB = []
+        querySnapshot.forEach((doc) => {
+          let entry = doc.data()
+          entry.id = doc.id
+          visitsFB.push(entry)
+        })
+        visits.value = visitsFB
+      }, error => {
+        Dialog.create({
+          title: 'Error',
+          message: error.message
+        })
+      })
+    }
+    const loadReports = async (projectId) => {
+      reportsCollectionRef = collection(doc(projectsCollectionRefCollectionRef, projectId), 'reports');
+      reportsQueryRef = query(reportsCollectionRef, orderBy('name'))
+        getEntriesSnapshot = onSnapshot(reportsQueryRef, (querySnapshot) => {
+        let reportsFB = []
+        querySnapshot.forEach((doc) => {
+          let entry = doc.data()
+          entry.id = doc.id
+          reportsFB.push(entry)
+        })
+        reports.value = reportsFB
+      }, error => {
+        Dialog.create({
+          title: 'Error',
+          message: error.message
+        })
+      })
+    }
     const clearAndStopEntries = () => {
-      entries.value = []
+      customers.value = []
       if (getEntriesSnapshot) getEntriesSnapshot()
     }
-
-    const addEntry = async addEntryForm => {
-      const newEntry = Object.assign({}, addEntryForm, 
-        { 
-          paid: false,
-          order: generateOrderNumber()
-        }
+    const addCustomer = async (customer)=>{
+      const newCustomer = Object.assign({}, customer,
+        {}
       )
-      if (newEntry.amount ===  null) newEntry.amount = 0
-      await addDoc(entriesCollectionRef, newEntry)
+      await addDoc(customersCollectionRef, newCustomer)
     }
-
-    const deleteEntry = async entryId => {
-      await deleteDoc(doc(entriesCollectionRef, entryId))
-      removeSlideItemIfExists(entryId)
+    const addVisit = async (visit)=>{
+      const newVisit = Object.assign({}, visit,
+        {}
+      )
+      await addDoc(visitsCollectionRef, newVisit)
+    }
+    const addReport = async (report)=>{
+      const newReport = Object.assign({}, report,
+        {}
+      )
+      await addDoc(reportCollectionRef, newReport)
+    }
+    const updateCustomer = async (customerId, updates) => {
+      await updateDoc(doc(customersCollectionRef, customerId), updates)
+    }
+    const deleteCustomer = async (customerId) => {
+      await deleteDoc(doc(customersCollectionRef, customerId))
+      removeSlideItemIfExists(customerId)
       Notify.create({
         message: 'Entry deleted',
         position: 'top'
       })
     }
-
-    const updateEntry = async (entryId, updates) => {
-      await updateDoc(doc(entriesCollectionRef, entryId), updates)
+    const addProject = async (project)=>{
+      const newProject = Object.assign({}, project,
+        {}
+      )
+      await addDoc(projectsCollectionRef, newProject)
     }
-
-    const updateEntryOrderNumbers = async () => {
-      let currentOrder = 1
-      entries.value.forEach(entry => {
-        entry.order = currentOrder
-        currentOrder++
-      })
-
-      getEntriesSnapshot()
-      await Promise.all(entries.value.map(async entry => {
-        await updateEntry(entry.id, { order: entry.order })
-      }))
-      loadEntries(false)
-    }
-
-    const sortEnd = ({ oldIndex, newIndex }) => {
-      const movedEntry = entries.value[oldIndex]
-      entries.value.splice(oldIndex, 1)
-      entries.value.splice(newIndex, 0, movedEntry)
-      updateEntryOrderNumbers()
-    }
-
 
   /*
     helpers
   */
-  
-    const generateOrderNumber = () => {
-      const orderNumbers = entries.value.map(entry => entry.order),
-            newOrderNumber = orderNumbers.length
-                             ? Math.max(...orderNumbers) + 1
-                             : 1
-      return newOrderNumber
-    }
-
-    const removeSlideItemIfExists = entryId => {
-      // hacky fix: when deleting (after sorting),
-      // sometimes the slide item is not removed
-      // from the dom. this will remove the slide
-      // item from the dom if it still exists
-      // (after entry removed from entries array)
-      nextTick(() => {
-        const slideItem = document.querySelector(`#id-${ entryId }`)
-        if (slideItem) slideItem.remove()
-      })
-    }
-
 
   /*
     return
   */
-  
-    return { 
+
+    return {
 
       // state
-      entries,
+      customers,
+      projects,
+      visits,
+      reports,
+
       entriesLoaded,
-      options,
 
       // getters
-      balance,
-      balancePaid,
-      runningBalances,
 
       // actions
       init,
       loadEntries,
-      clearAndStopEntries,
-      addEntry,
-      deleteEntry,
-      updateEntry,
-      sortEnd
+      loadProjects,
+      loadVisits,
+      loadReports,
+      addCustomer,
+      addProject,
+      addVisit,
 
+      clearAndStopEntries,
+      updateCustomer,
+      deleteCustomer,
     }
-    
+
 })
